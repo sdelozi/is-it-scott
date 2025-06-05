@@ -385,6 +385,12 @@
       headshotImg.src = currentGroom.headshot;
       revealBox.style.display = "block";
       submitBtn.disabled = true;
+
+      // Randomized reveal audio
+      const variants = 4;
+      const randomIndex = Math.floor(Math.random() * variants) + 1;
+      const audioPath = `audio/reveal_${currentGroom.name.toLowerCase()}_${randomIndex}.mp3`;
+      playNarration(audioPath);
     });
 
     nextBtn.addEventListener("click", nextRound);
