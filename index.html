@@ -331,9 +331,9 @@
 
       // Determine multiplier: 10% triple, 20% double, else normal
       const randVal = Math.random();
-      if (randVal < 0.10) {
+      if (randVal < 0.10 && roundNumber > 1) { // 10% chance for triple points, only after first round
         roundMultiplier = 3;
-      } else if (randVal < 0.30) { // 0.10 + 0.20 = 0.30
+      } else if (randVal < 0.30 && roundNumber > 1) { // 0.10 + 0.20 = 0.30
         roundMultiplier = 2;
       } else {
         roundMultiplier = 1;
