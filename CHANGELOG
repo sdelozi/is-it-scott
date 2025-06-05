@@ -43,3 +43,7 @@
 ## v1.1.2
 [Improvements] Dustin photos
 - Added dustin photos
+
+## v1.1.2
+[BugFix] Duplicate Jerry Reveal
+- Fixed issue where there was a duplicate jerry reveal audio
