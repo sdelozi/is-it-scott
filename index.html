@@ -110,6 +110,7 @@
   <!-- Game Screen -->
   <section id="game-wrapper">
     <h2 id="round-label"></h2>
+    <div id="multiplier-label" style="font-size: 2rem; font-weight: bold; color: #a855f7; height: 2.5rem; margin-bottom: 0.5rem; opacity: 0; transition: opacity 0.5s ease;"></div>
     <img id="round-img" src="" alt="Body part to guess" />
 
     <form id="guess-area"></form>
@@ -251,6 +252,7 @@
     let roundNumber = 0;     // increments each round
     let currentGroom = null; // groomsman object for the active round
     let imagePool = []; // all available body part images
+    let roundMultiplier = 1;
 
     const setupSection = document.getElementById("setup");
     const gameSection  = document.getElementById("game-wrapper");
@@ -327,6 +329,16 @@
       revealBox.style.display = "none";
       submitBtn.disabled = false;
 
+      // Determine multiplier: 10% triple, 20% double, else normal
+      const randVal = Math.random();
+      if (randVal < 0.10) {
+        roundMultiplier = 3;
+      } else if (randVal < 0.30) { // 0.10 + 0.20 = 0.30
+        roundMultiplier = 2;
+      } else {
+        roundMultiplier = 1;
+      }
+
       if (imagePool.length === 0) {
         showGameOver(Object.entries(scores).map(([name, score]) => ({ name, score })));
         return;
@@ -357,24 +369,53 @@
         wrapper.appendChild(select);
         guessArea.appendChild(wrapper);
       });
+
+      const multiplierLabel = document.getElementById("multiplier-label");
+
+      if (roundMultiplier === 1) {
+        multiplierLabel.style.opacity = "0";
+        multiplierLabel.textContent = "";
+      } else {
+        multiplierLabel.textContent = (roundMultiplier === 2 ? "Double Points!" : "Triple Points!");
+        multiplierLabel.style.opacity = "1";
+
+        // Add simple scale animation
+        multiplierLabel.animate([
+          { transform: 'scale(1)', opacity: 0 },
+          { transform: 'scale(1.3)', opacity: 1 },
+          { transform: 'scale(1)', opacity: 1 }
+        ], {
+          duration: 1000,
+          easing: 'ease-out',
+        });
+      }
+
+      if (roundMultiplier === 2) {
+        playNarration('audio/double_points.mp3');
+      } else if (roundMultiplier === 3) {
+        playNarration('audio/triple_points.mp3');
+      }
     }
 
     submitBtn.addEventListener("click", () => {
       players.forEach(player => {
         const guess = guessArea.querySelector(`select[name='${player}']`).value;
         const correctName = currentGroom.name;
+        let points = 0;
 
         if (correctName === "Scott") {
-          scores[player] += (guess === "Scott") ? 2 : 0;
+          points = (guess === "Scott") ? 2 : 0;
         } else {
           if (guess === correctName) {
-            scores[player] += 2;
+            points = 2;
           } else if (guess !== "Scott") {
-            scores[player] += 1;
+            points = 1;
           } else {
-            scores[player] += 0;
+            points = 0;
           }
         }
+
+        scores[player] += points * roundMultiplier;
       });
 
       // update leaderboard
