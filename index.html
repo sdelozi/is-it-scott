@@ -82,7 +82,7 @@
 </head>
 <body>
   <h1>Is It Scott?</h1>
-  <p>A fun game for Steph's bachelorette party! Guess the groomsman!</p>
+  <p>Who could it be? Is it Scott or is it not? Guess the groomsman!</p>
 
   <!-- Audio Elements -->
   <audio id="bg-music" loop>
@@ -468,6 +468,8 @@
       const winners = leaderboard.filter(p => p.score === topScore);
       const names = winners.map(p => p.name).join(", ");
       document.getElementById("winner-text").textContent = `Congratulations to the winner${winners.length > 1 ? 's' : ''}: ${names}!`;
+
+      playNarration('audio/narration_game_over.mp3');
     }
 
     function playNarration(src, onComplete) {

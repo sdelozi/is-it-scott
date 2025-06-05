@@ -34,3 +34,8 @@
 ## v1.1.0
 [Improvements] Double and Triple Points
 - Added point multipliers and double/triple point audio clips
+
+## v1.1.1
+[Improvements] Game Over Narration
+- Added narration to the game over screen
+- New sub header
