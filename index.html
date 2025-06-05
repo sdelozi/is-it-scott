@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Is It Scott? – Bachelorette Party Game</title>
+  <style>
+    * { box-sizing: border-box; font-family: system-ui, sans-serif; }
+    body {
+      background: linear-gradient(to bottom right, #f3e8ff, #dcd0ff);
+      margin: 0; padding: 2rem;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    h1 {
+      font-size: 3rem;
+      margin: 0.5rem 0;
+      color: #6b21a8;
+      text-shadow: 2px 2px #e9d5ff;
+    }
+    h2 { margin: 0.5rem 0; }
+    button {
+      cursor: pointer; padding: 0.5rem 1rem;
+      border: none; border-radius: 0.5rem;
+      background: #4f46e5; color: #fff;
+      font-size: 1rem; transition: 0.2s;
+    }
+    button:hover { background: #4338ca; }
+    img {
+      max-width: 100%; height: auto;
+      border-radius: 1rem;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    #game-wrapper {
+      display: none;
+      width: 100%; max-width: 900px;
+    }
+    #round-img {
+      width: 100%; max-height: 360px;
+      object-fit: contain; background: #fff;
+    }
+    #guess-area div { margin: 0.25rem 0; }
+    select {
+      padding: 0.25rem;
+      border-radius: 0.25rem;
+    }
+    #leaderboard { margin-top: 1rem; }
+    table {
+      width: 100%; border-collapse: collapse;
+    }
+    th, td {
+      padding: 0.5rem; text-align: left;
+    }
+    tr:nth-child(even) { background: #eef2ff; }
+    .headshot-gallery {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    .headshot-gallery img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 3px solid #a78bfa;
+    }
+    #game-over {
+      display: none;
+      margin-top: 2rem;
+      text-align: center;
+    }
+    #game-over h2 {
+      font-size: 2.5rem;
+      color: #6b21a8;
+    }
+    #game-over p {
+      font-size: 1.2rem;
+      margin: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Is It Scott?</h1>
+  <p>A fun game for Steph's bachelorette party! Guess the groomsman!</p>
+
+  <!-- Audio Elements -->
+  <audio id="bg-music" loop>
+    <source src="audio/jazz-background.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
+
+  <audio id="narration"></audio>
+
+  <!-- Setup Screen -->
+  <section id="setup">
+    <p>Type each player's name, separated by commas, then press <strong>Start Game</strong>.</p>
+    <input id="player-input" type="text" placeholder="e.g. Anna,Beth,Carla" style="width:100%;padding:0.5rem;margin-bottom:0.5rem;border:1px solid #d1d5db;border-radius:0.5rem;" />
+    <button id="start-btn">Start Game</button>
+    <div class="headshot-gallery">
+      <img src="images/headshots/scott.jpg" alt="Scott" />
+      <img src="images/headshots/jerry.jpg" alt="Jerry" />
+      <img src="images/headshots/dustin.jpg" alt="Dustin" />
+      <img src="images/headshots/michael.jpg" alt="Michael" />
+      <img src="images/headshots/sam.jpg" alt="Sam" />
+      <img src="images/headshots/tyson.jpg" alt="Tyson" />
+    </div>
+  </section>
+
+  <!-- Game Screen -->
+  <section id="game-wrapper">
+    <h2 id="round-label"></h2>
+    <img id="round-img" src="" alt="Body part to guess" />
+
+    <form id="guess-area"></form>
+
+    <button id="submit-btn" type="button">Submit Guesses</button>
+
+    <section id="reveal" style="display:none; margin-top:1rem;">
+      <h2 id="answer-heading"></h2>
+      <img id="headshot-img" src="" alt="Headshot" style="max-height:300px;" />
+      <div style="margin-top:0.75rem;">
+        <button id="next-btn" type="button">Next Round</button>
+      </div>
+    </section>
+
+    <section id="leaderboard">
+      <h2>Leaderboard</h2>
+      <table id="scores-table"></table>
+    </section>
+  </section>
+
+  <!-- Game Over Screen -->
+  <section id="game-over">
+    <h2>🎉 Game Over! 🎉</h2>
+    <p>Thanks for playing <strong>Is It Scott?</strong></p>
+    <div id="final-leaderboard"></div>
+    <p id="winner-text"></p>
+  </section>
+
+  <!-- Dimming Overlay -->
+  <div id="overlay" style="
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+    z-index: 1000;
+  "></div>
+
+  <script>
+    const groomsmen = [
+      {
+        name: "Scott",
+        headshot: "images/headshots/scott.jpg",
+        parts: [
+          "images/bodyparts/scott_belly.jpg",
+          "images/bodyparts/scott_ear.jpg",
+          "images/bodyparts/scott_eye.jpg",
+          "images/bodyparts/scott_hair.jpg",
+          "images/bodyparts/scott_hand.jpg",
+          "images/bodyparts/scott_knee.jpg",
+          "images/bodyparts/scott_mouth.jpg",
+          "images/bodyparts/scott_nose.jpg",
+          "images/bodyparts/scott_thumb.jpg"
+        ]
+      },
+      {
+        name: "Jerry",
+        headshot: "images/headshots/jerry.jpg",
+        parts: [
+          "images/bodyparts/jerry_belly.jpg",
+          "images/bodyparts/jerry_ear.jpg",
+          "images/bodyparts/jerry_eye.jpg",
+          "images/bodyparts/jerry_hair.jpg",
+          "images/bodyparts/jerry_hand.jpg",
+          "images/bodyparts/jerry_knee.jpg",
+          "images/bodyparts/jerry_mouth.jpg",
+          "images/bodyparts/jerry_nose.jpg",
+          "images/bodyparts/jerry_thumb.jpg"
+        ]
+      },
+      {
+        name: "Dustin",
+        headshot: "images/headshots/dustin.jpg",
+        parts: [
+          "images/bodyparts/dustin_belly.jpg",
+          "images/bodyparts/dustin_ear.jpg",
+          "images/bodyparts/dustin_eye.jpg",
+          "images/bodyparts/dustin_hair.jpg",
+          "images/bodyparts/dustin_hand.jpg",
+          "images/bodyparts/dustin_knee.jpg",
+          "images/bodyparts/dustin_mouth.jpg",
+          "images/bodyparts/dustin_nose.jpg",
+          "images/bodyparts/dustin_thumb.jpg"
+        ]
+      },
+      {
+        name: "Michael",
+        headshot: "images/headshots/michael.jpg",
+        parts: [
+          "images/bodyparts/michael_belly.jpg",
+          "images/bodyparts/michael_ear.jpg",
+          "images/bodyparts/michael_eye.jpg",
+          "images/bodyparts/michael_hair.jpg",
+          "images/bodyparts/michael_hand.jpg",
+          "images/bodyparts/michael_knee.jpg",
+          "images/bodyparts/michael_mouth.jpg",
+          "images/bodyparts/michael_nose.jpg",
+          "images/bodyparts/michael_thumb.jpg"
+        ]
+      },
+      {
+        name: "Sam",
+        headshot: "images/headshots/sam.jpg",
+        parts: [
+          "images/bodyparts/sam_belly.jpg",
+          "images/bodyparts/sam_ear.jpg",
+          "images/bodyparts/sam_eye.jpg",
+          "images/bodyparts/sam_hair.jpg",
+          "images/bodyparts/sam_hand.jpg",
+          "images/bodyparts/sam_knee.jpg",
+          "images/bodyparts/sam_mouth.jpg",
+          "images/bodyparts/sam_nose.jpg",
+          "images/bodyparts/sam_thumb.jpg"
+        ]
+      },
+      {
+        name: "Tyson",
+        headshot: "images/headshots/tyson.jpg",
+        parts: [
+          "images/bodyparts/tyson_belly.jpg",
+          "images/bodyparts/tyson_ear.jpg",
+          "images/bodyparts/tyson_eye.jpg",
+          "images/bodyparts/tyson_hair.jpg",
+          "images/bodyparts/tyson_hand.jpg",
+          "images/bodyparts/tyson_knee.jpg",
+          "images/bodyparts/tyson_mouth.jpg",
+          "images/bodyparts/tyson_nose.jpg",
+          "images/bodyparts/tyson_thumb.jpg"
+        ]
+      }
+    ];
+
+    /* -------------------------------------------
+       STATE & HELPERS
+    ------------------------------------------- */
+    let players = [];        // array of player names
+    let scores = {};         // { playerName: points }
+    let roundNumber = 0;     // increments each round
+    let currentGroom = null; // groomsman object for the active round
+    let imagePool = []; // all available body part images
+
+    const setupSection = document.getElementById("setup");
+    const gameSection  = document.getElementById("game-wrapper");
+    const roundImg     = document.getElementById("round-img");
+    const roundLabel   = document.getElementById("round-label");
+    const guessArea    = document.getElementById("guess-area");
+    const submitBtn    = document.getElementById("submit-btn");
+    const revealBox    = document.getElementById("reveal");
+    const answerHeading= document.getElementById("answer-heading");
+    const headshotImg  = document.getElementById("headshot-img");
+    const nextBtn      = document.getElementById("next-btn");
+    const scoreTable   = document.getElementById("scores-table");
+    const overlay = document.getElementById('overlay');
+
+    const bgMusic = document.getElementById('bg-music');
+    const narration = document.getElementById('narration');
+
+    // Utility: random choice from array
+    const rand = arr => arr[Math.floor(Math.random() * arr.length)];
+
+    /* -------------------------------------------
+       INITIALISATION
+    ------------------------------------------- */
+    document.getElementById("start-btn").addEventListener("click", () => {
+      try {
+        bgMusic.volume = 0.3;
+        bgMusic.play();
+
+        const raw = document.getElementById("player-input").value;
+        players = raw.split(/,|\n/).map(s => s.trim()).filter(Boolean);
+        if (!players.length) return alert("Please enter at least one player name 🤗");
+
+        // reset state
+        scores = Object.fromEntries(players.map(p => [p, 0]));
+        roundNumber = 0;
+
+        overlay.style.pointerEvents = "auto"; // Optionally block clicks while dimmed
+        overlay.style.opacity = "1";           // Fade in (dim)
+
+        // Play narration first, then show game UI and start round
+        playNarration('audio/narration_intro.mp3', () => {
+          overlay.style.opacity = "0";         // Fade out (undim)
+          overlay.style.pointerEvents = "none";
+
+          // switch screens AFTER narration
+          setupSection.style.display = "none";
+          gameSection.style.display = "block";
+
+          // Build initial image pool (one entry per body part)
+          imagePool = [];
+          groomsmen.forEach(groom => {
+            groom.parts.forEach(part => {
+              imagePool.push({
+                groomName: groom.name,
+                headshot: groom.headshot,
+                imagePath: part
+              });
+            });
+          });
+
+          nextRound();
+        });
+
+      } catch (e) {
+        console.warn("Autoplay blocked: user must interact with page.");
+      }
+    });
+
+    /* -------------------------------------------
+       GAME FLOW
+    ------------------------------------------- */
+    function nextRound() {
+      roundNumber++;
+      revealBox.style.display = "none";
+      submitBtn.disabled = false;
+
+      if (imagePool.length === 0) {
+        showGameOver(Object.entries(scores).map(([name, score]) => ({ name, score })));
+        return;
+      }
+
+      // Pick and remove a random image from the pool
+      const index = Math.floor(Math.random() * imagePool.length);
+      const entry = imagePool.splice(index, 1)[0]; // remove from pool
+
+      currentGroom = { name: entry.groomName, headshot: entry.headshot };
+      const bodyPartPath = entry.imagePath;
+
+      roundLabel.textContent = `Round ${roundNumber}`;
+      roundImg.src = bodyPartPath;
+
+      guessArea.innerHTML = "";
+      players.forEach(player => {
+        const wrapper = document.createElement("div");
+        const select  = document.createElement("select");
+        select.name   = player;
+        groomsmen.forEach(g => {
+          const opt = document.createElement("option");
+          opt.value = g.name;
+          opt.textContent = g.name;
+          select.appendChild(opt);
+        });
+        wrapper.innerHTML = `<strong>${player}</strong>: `;
+        wrapper.appendChild(select);
+        guessArea.appendChild(wrapper);
+      });
+    }
+
+    submitBtn.addEventListener("click", () => {
+      players.forEach(player => {
+        const guess = guessArea.querySelector(`select[name='${player}']`).value;
+        const correctName = currentGroom.name;
+
+        if (correctName === "Scott") {
+          scores[player] += (guess === "Scott") ? 2 : 0;
+        } else {
+          if (guess === correctName) {
+            scores[player] += 2;
+          } else if (guess !== "Scott") {
+            scores[player] += 1;
+          } else {
+            scores[player] += 0;
+          }
+        }
+      });
+
+      // update leaderboard
+      updateLeaderboard();
+
+      // reveal answer
+      answerHeading.textContent = `It was ${currentGroom.name}!`;
+      headshotImg.src = currentGroom.headshot;
+      revealBox.style.display = "block";
+      submitBtn.disabled = true;
+    });
+
+    nextBtn.addEventListener("click", nextRound);
+
+    function updateLeaderboard() {
+      const rows = Object.entries(scores)
+        .sort(([,a],[,b]) => b - a)
+        .map(([name,pts]) => `<tr><td>${name}</td><td>${pts}</td></tr>`)
+        .join("");
+      scoreTable.innerHTML = `<tr><th>Player</th><th>Points</th></tr>${rows}`;
+    }
+
+    function showGameOver(players) {
+      document.getElementById("game-wrapper").style.display = "none";
+      document.getElementById("game-over").style.display = "block";
+
+      const leaderboard = [...players].sort((a, b) => b.score - a.score);
+
+      const table = document.createElement("table");
+      const headerRow = document.createElement("tr");
+      headerRow.innerHTML = "<th>Player</th><th>Score</th>";
+      table.appendChild(headerRow);
+
+      leaderboard.forEach(p => {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${p.name}</td><td>${p.score}</td>`;
+        table.appendChild(row);
+      });
+
+      document.getElementById("final-leaderboard").innerHTML = "";
+      document.getElementById("final-leaderboard").appendChild(table);
+
+      const topScore = leaderboard[0].score;
+      const winners = leaderboard.filter(p => p.score === topScore);
+      const names = winners.map(p => p.name).join(", ");
+      document.getElementById("winner-text").textContent = `Congratulations to the winner${winners.length > 1 ? 's' : ''}: ${names}!`;
+    }
+
+    function playNarration(src, onComplete) {
+      narration.src = src;
+      narration.volume = 1.0;
+      narration.play();
+      bgMusic.volume = 0.1;
+
+      narration.onended = () => {
+        bgMusic.volume = 0.3;
+        if (onComplete) onComplete();
+      };
+    }
+  </script>
+</body>
+</html>
