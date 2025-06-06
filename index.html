@@ -247,11 +247,11 @@
     /* -------------------------------------------
        STATE & HELPERS
     ------------------------------------------- */
-    let players = [];        // array of player names
-    let scores = {};         // { playerName: points }
-    let roundNumber = 0;     // increments each round
-    let currentGroom = null; // groomsman object for the active round
-    let imagePool = []; // all available body part images
+    let players = [];
+    let scores = {};
+    let roundNumber = 0;
+    let currentGroom = null;
+    let imagePool = [];
     let roundMultiplier = 1;
 
     const setupSection = document.getElementById("setup");
@@ -289,19 +289,17 @@
         scores = Object.fromEntries(players.map(p => [p, 0]));
         roundNumber = 0;
 
-        overlay.style.pointerEvents = "auto"; // Optionally block clicks while dimmed
-        overlay.style.opacity = "1";           // Fade in (dim)
+        overlay.style.pointerEvents = "auto";
+        overlay.style.opacity = "1";
 
-        // Play narration first, then show game UI and start round
         playNarration('audio/narration_intro.mp3', () => {
-          overlay.style.opacity = "0";         // Fade out (undim)
+          overlay.style.opacity = "0";
           overlay.style.pointerEvents = "none";
 
           // switch screens AFTER narration
           setupSection.style.display = "none";
           gameSection.style.display = "block";
 
-          // Build initial image pool (one entry per body part)
           imagePool = [];
           groomsmen.forEach(groom => {
             groom.parts.forEach(part => {
@@ -329,11 +327,11 @@
       revealBox.style.display = "none";
       submitBtn.disabled = false;
 
-      // Determine multiplier: 10% triple, 20% double, else normal
+      // point multiplier: 10% triple, 20% double, else normal
       const randVal = Math.random();
-      if (randVal < 0.10 && roundNumber > 1) { // 10% chance for triple points, only after first round
+      if (randVal < 0.10 && roundNumber > 1) {
         roundMultiplier = 3;
-      } else if (randVal < 0.30 && roundNumber > 1) { // 0.10 + 0.20 = 0.30
+      } else if (randVal < 0.30 && roundNumber > 1) {
         roundMultiplier = 2;
       } else {
         roundMultiplier = 1;
@@ -344,9 +342,8 @@
         return;
       }
 
-      // Pick and remove a random image from the pool
       const index = Math.floor(Math.random() * imagePool.length);
-      const entry = imagePool.splice(index, 1)[0]; // remove from pool
+      const entry = imagePool.splice(index, 1)[0];
 
       currentGroom = { name: entry.groomName, headshot: entry.headshot };
       const bodyPartPath = entry.imagePath;
@@ -379,7 +376,6 @@
         multiplierLabel.textContent = (roundMultiplier === 2 ? "Double Points!" : "Triple Points!");
         multiplierLabel.style.opacity = "1";
 
-        // Add simple scale animation
         multiplierLabel.animate([
           { transform: 'scale(1)', opacity: 0 },
           { transform: 'scale(1.3)', opacity: 1 },
@@ -418,7 +414,6 @@
         scores[player] += points * roundMultiplier;
       });
 
-      // update leaderboard
       updateLeaderboard();
 
       // reveal answer
