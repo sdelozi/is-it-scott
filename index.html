@@ -278,7 +278,7 @@
     ------------------------------------------- */
     document.getElementById("start-btn").addEventListener("click", () => {
       try {
-        bgMusic.volume = 0.3;
+        bgMusic.volume = 0.15;
         bgMusic.play();
 
         const raw = document.getElementById("player-input").value;
@@ -476,10 +476,10 @@
       narration.src = src;
       narration.volume = 1.0;
       narration.play();
-      bgMusic.volume = 0.1;
+      bgMusic.volume = 0.075;
 
       narration.onended = () => {
-        bgMusic.volume = 0.3;
+        bgMusic.volume = 0.15;
         if (onComplete) onComplete();
       };
     }
